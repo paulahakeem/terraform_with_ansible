@@ -1,0 +1,23 @@
+- name: wait untill ec2 initialized
+  hosts: localhost
+  tasks:
+    - name: Delay for 25 seconds
+      pause:
+        seconds: 25
+
+- name: setup WordPress on EC2
+  hosts: webservers
+  gather_facts: yes
+  become: yes
+  remote_user: ubuntu
+  roles:
+    - wordpress       
+
+- name: setup mysql on EC2
+  hosts: webservers
+  gather_facts: yes
+  become: yes
+  remote_user: ubuntu
+  roles:
+    - mysql                         
+

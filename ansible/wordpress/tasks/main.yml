@@ -1,0 +1,74 @@
+---
+
+- name: Install apache
+  apt:
+    name: apache2
+    state: present
+    update_cache: yes
+  notify: Restart Apache
+
+- name: Install php extensions for WordPress
+  apt:
+    pkg: "{{ php_modules }}"
+    state: present
+  notify: Restart Apache
+
+- name: Remove existing WordPress directory
+  file:
+    path: "/var/www/html/wordpress"
+    state: absent
+
+- name: Clone WordPress from private repository with token authentication
+  git:
+    repo: "https://{{ github_token }}@{{ github_repo_url }}"
+    dest: "/var/www/html/wordpress"
+    version: master
+    clone: yes
+    accept_hostkey: yes
+  register: git_clone_output
+
+- debug:
+    var: git_clone_output
+
+- name: Set ownership and permissions for WordPress files
+  file:
+    path: /var/www/html/wordpress
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+    recurse: yes
+
+- name: Create WordPress configuration file (wp-config.php)
+  template:
+    src: wordpress.conf.j2
+    dest: "/var/www/html/wordpress/wp-config.php"
+    owner: www-data
+    group: www-data
+    mode: '0655'
+
+- name: Create /etc/apache2/sites-available/wordpress.conf
+  template:
+    src: apache.conf.j2
+    dest: /etc/apache2/sites-available/wordpress.conf
+    owner: www-data
+    group: www-data
+    mode: '0655'
+  notify: Restart Apache
+
+- name: Enable WordPress site
+  shell: |
+    a2ensite wordpress
+    a2enmod rewrite
+
+- name: Disable default Apache site
+  apache2_module:
+    state: absent
+    name: 000-default
+  notify: Restart Apache
+
+- name: Remove default Apache site
+  file:
+    path: /etc/apache2/sites-enabled/000-default.conf
+    state: absent
+  notify: Restart Apache

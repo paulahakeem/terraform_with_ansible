@@ -1,0 +1,72 @@
+---
+- name: Install MySQL
+  apt:
+    name:
+      - mysql-server
+      - python3-mysqldb
+    state: present
+    update_cache: yes         
+
+- name: Start and Enable MySQL service
+  tags: mysql
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+
+- name: Set the root password
+  mysql_user:
+    name: root
+    password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+
+- name: Remove all anonymous user accounts
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+
+- name: Remove the MySQL test database
+  mysql_db:
+    name: test
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+
+- name: Creates database for WordPress
+  mysql_db:
+    name: "{{ mysql_db }}"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  
+
+- name: Create MySQL user for WordPress
+  mysql_user:
+    name: "{{ mysql_user }}"
+    password: "{{ mysql_password }}"
+    priv: "{{ mysql_db }}.*:ALL"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+
+- name: Add daily backup cron job
+  cron:
+    name: "MySQL Backup"
+    minute: '0'
+    hour: '1'
+    job: "mysqldump --all-databases -u root -p '{{ mysql_root_password }}' > /var/backups/mysql-$(date +%Y%m%d).sql"
+
+- name: Add daily backup cron jobd
+  tags: mysql
+  cron:
+    name: "MySQL Backup"
+    minute: '0'
+    hour: '1'
+    job: "mysqldump --all-databases -u root -p '{{ mysql_root_password }}' > /var/backups/mysql-$(date +%Y%m%d).sql"    
