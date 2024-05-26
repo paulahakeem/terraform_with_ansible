@@ -1,5 +1,5 @@
 module "network" {
-  source                      = "./terraform/modules/NETWORK"
+  source                      = "./modules/NETWORK"
   vpc_name                    = "Paula-MainVpc"
   vpc_cidr                    = "10.0.0.0/16"
   enable_dns_support          = true
@@ -18,12 +18,10 @@ module "network" {
   in_protocol                 = "tcp"
   eg_port                     = 0
   eg_protocol                 = "-1"
-
 }
 
-
 module "load_balancer" {
-  source                     = "./terraform/modules/LB"
+  source                     = "./modules/LB"
   lb_name                    = "paulaLB"
   internal                   = false
   load_balancer_type         = "application"
@@ -33,12 +31,11 @@ module "load_balancer" {
   port                       = 80
   protocol                   = "HTTP"
   vpc_id                     = module.network.vpc_id
-instance_ids                = module.ec2_instance.instance_ids
+  instance_ids               = module.ec2_instance.instance_ids
 }
 
-#----------------------- ------------------------------------#
 module "ec2_instance" {
-  source                      = "./terraform/modules/VMS"
+  source                      = "./modules/VMS"
   ec2_name                    = "paula_ansible-terraform"
   ec2_ami                     = "ami-04b70fa74e45c3917"
   ec2_type                    = "t3.micro"
@@ -49,10 +46,9 @@ module "ec2_instance" {
   instance_count              = 2
 }
 
-
 resource "null_resource" "ansible_inventory" {
   provisioner "local-exec" {
-    command = "rm -f ansible/inventory* && echo '[webservers]' > ansible/inventory.yaml && echo '${module.ec2_instance.public_ips[0]}' >> ansible/inventory.yaml && echo '${module.ec2_instance.public_ips[1]}' >> ansible/inventory.yaml"
+    command     = "rm -f ../ansible/inventory* && echo '[webservers]' > ../ansible/inventory.yaml && echo '${module.ec2_instance.public_ips[0]}' >> ../ansible/inventory.yaml && echo '${module.ec2_instance.public_ips[1]}' >> ../ansible/inventory.yaml"
     working_dir = "${path.module}"
   }
 
@@ -63,23 +59,18 @@ resource "null_resource" "ansible_inventory" {
   depends_on = [module.ec2_instance]
 }
 
-
-
 resource "null_resource" "ansible" {
   provisioner "local-exec" {
-    command     = "ansible-playbook -i inventory.yaml wordpress.yaml -e '@variables.yaml'"
-    working_dir = "${path.module}/ansible"
+    command     = "ansible-playbook -i ../ansible/inventory.yaml ../ansible/wordpress.yaml -e '@../ansible/variables.yaml'"
+    working_dir = "${path.module}"
   }
-  
+
   triggers = {
-    always_run = "${timestamp()}"
+    always_run = timestamp()
   }
 
-  depends_on = [null_resource.ansible_inventory,module.ec2_instance]
+  depends_on = [null_resource.ansible_inventory, module.ec2_instance]
 }
-
-
-
 
 output "DNS_LINK" {
   value = module.load_balancer.lb_dns_name
