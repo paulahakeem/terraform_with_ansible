@@ -61,10 +61,10 @@ resource "null_resource" "ansible_inventory" {
 
 resource "null_resource" "ansible" {
   provisioner "local-exec" {
-    command     = "ansible-playbook -i ../ansible/inventory.yaml ../ansible/wordpress.yaml -e '@../ansible/variables.yaml'"
-    working_dir = "${path.module}"
+    command     = "ansible-playbook -i inventory.yaml wordpress.yaml -e '@variables.yaml'"
+    working_dir = "${path.module}/../ansible"
   }
-
+  
   triggers = {
     always_run = timestamp()
   }
