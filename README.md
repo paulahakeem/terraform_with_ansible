@@ -1,5 +1,5 @@
 # Terraform with Ansible
-Create two EC2 machines using Terraform and run the Ansible playbook that installs MySQL and WordPress on both of them at the same time.
+Create two EC2 machines using Terraform, set up a load balancer for them, and run the Ansible playbook that installs MySQL and WordPress on both of them at the same time.
 
 # Prerequisites
 - Terraform
@@ -35,4 +35,4 @@ Create two EC2 machines using Terraform and run the Ansible playbook that instal
     ```
 
 # Terraform Configuration
-The `terraform/main.tf` file is configured to manage the entire infrastructure for this project. It uses Terraform modules to ensure a modular and reusable approach. This means you can configure and manage various aspects of the project, such as creating EC2 instances, setting up networking, and other AWS resources, all within the `main.tf` file. The use of modules allows for a clean and organized structure, making it easier to extend and maintain the infrastructure as needed.
+The `terraform/main.tf` file is configured to manage the entire infrastructure for this project. It uses Terraform modules to ensure a modular and reusable approach. This means you can configure and manage various aspects of the project, such as creating EC2 instances, setting up networking, and other AWS resources, all within the `main.tf` file. Additionally, a load balancer is set up to distribute traffic between the two EC2 machines, ensuring high availability and reliability for the deployed applications. The use of modules allows for a clean and organized structure, making it easier to extend and maintain the infrastructure as needed.
